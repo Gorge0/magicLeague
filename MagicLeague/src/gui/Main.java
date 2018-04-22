@@ -10,6 +10,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 import bean.Card;
+import engine.MouseBorderCheck;
 
 public class Main {
 	
@@ -26,11 +27,15 @@ public class Main {
 	      SwingUtilities.invokeLater(new Runnable() {
 	         @Override
 	         public void run() {
-	        	 frame.setBounds(200, 100, Tela.PWIDTH, Tela.PHEIGHT);
+//	        	 frame.setBounds(200, 100, Tela.PWIDTH, Tela.PHEIGHT);
+	        	 frame.setBounds(200, 100, 800, 600);
 	     		 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	     		 
+	     		 scroll.setDoubleBuffered(true);
 	             frame.add(scroll);  // Let the constructor do the job
 	             frame.setVisible(true);
+	             
+//	             new MouseBorderCheck().start();
 	             
 	             try {
 					cards.add(new Card("Act of Heroism", ImageIO.read(new File("card.png"))));

@@ -1,9 +1,13 @@
 package gui;
 
+import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -12,11 +16,12 @@ import java.awt.event.MouseMotionListener;
 import javax.swing.JPanel;
 
 import bean.Card;
+import engine.MouseController;
 
-public class Tela extends JPanel implements Runnable, MouseMotionListener {
+public class Tela extends JPanel implements Runnable {
 
-	public static final Integer PWIDTH = 800;   // size of panel
-	public static final Integer PHEIGHT = 600;
+	public static final Integer PWIDTH = 1600;   // size of panel
+	public static final Integer PHEIGHT = 1200;
 
 	private Thread animator;            // for the animation
 
@@ -42,22 +47,7 @@ public class Tela extends JPanel implements Runnable, MouseMotionListener {
 		setFocusable(true);  
 		requestFocus();    // JPanel now receives key events  
 		readyForTermination();
-		addMouseMotionListener(this);
 
-//		addMouseListener( new MouseAdapter() {
-//			public void mousePressed(MouseEvent e)    {
-//				if(!gameOver){
-//					int x = e.getX();
-//					int y = e.getY();
-//
-//					Dimension d = Main.frame.getSize();
-//					
-//					
-//					//more
-//
-//				}
-//			}
-//		});
 		try {
 			Thread.sleep(20);  // sleep a bit  
 		}  catch(InterruptedException ex){
@@ -65,7 +55,11 @@ public class Tela extends JPanel implements Runnable, MouseMotionListener {
 		}
 	}
 
-	private void readyForTermination() {  
+	private void readyForTermination() {
+		MouseController mouse = new MouseController(this);
+		addMouseListener(mouse);
+		addMouseMotionListener(mouse);
+//		setAutoscrolls(true);
 		
 	}
 	
@@ -87,6 +81,20 @@ public class Tela extends JPanel implements Runnable, MouseMotionListener {
 	}
 
 	private void gameUpdate(){
+//		Point p = MouseInfo.getPointerInfo().getLocation();
+//		int maxX = (int) Main.frame.getSize().getWidth();
+//		int maxY = (int) Main.frame.getSize().getHeight();
+//		if(maxX - p.getX() < 100) {
+////			Main.scroll.getHorizontalScrollBar().setValue(Main.scroll.getHorizontalScrollBar().getValue()+
+////					(30 - (maxX - e.getX()) ));
+//			Main.scroll.getHorizontalScrollBar().setValue(Main.scroll.getHorizontalScrollBar().getValue()+5);
+////			try {
+////				Thread.sleep(1);  // sleep a bit    }
+////			}
+////			catch(InterruptedException ex){
+////				ex.printStackTrace();
+////			}
+//		}
 		if(!gameOver){
 			
 		}
@@ -95,7 +103,7 @@ public class Tela extends JPanel implements Runnable, MouseMotionListener {
 	// draw the current frame to an image buffer
 	private void gameRender() { 
 		Dimension d = Main.frame.getSize();
-		dbImage = createImage(d.width, d.height);
+		dbImage = createImage(PWIDTH, PHEIGHT);
 		if (dbImage == null) {
 			System.out.println("dbImage is null");
 			return;
@@ -105,28 +113,39 @@ public class Tela extends JPanel implements Runnable, MouseMotionListener {
 
 		// clear the background
 		dbg.setColor(Color.white);
-		dbg.fillRect (0, 0, d.width, d.height);
+		dbg.fillRect (0, 0, PWIDTH, PHEIGHT);
 		
 		for(Card c : Main.cards) {
 			dbg.drawImage(c.getImage(), c.getX(), c.getY(), c.getW(), c.getH(), null);
 		}
 		
-		dbg.dispose();
+//		dbg.dispose();
 	}
 
-	public void run() /* Repeatedly update, render, sleep */ {  
+	public void run() /* Repeatedly update, render, sleep */ {
+		
+		long beforeTime, timeDiff, sleepTime;
+		beforeTime = System.currentTimeMillis( );
+		
 		running = true;
 		while(running) {
 			gameUpdate();   // game state is updated    
 			gameRender();   // render to a buffer    
 			paintScreen();  // draw buffer to screen
+			
+			timeDiff = System.currentTimeMillis( ) - beforeTime;
+			sleepTime = 15 - timeDiff; // time left in this loop
+			if (sleepTime <= 0) // update/render took longer than period
+				sleepTime = 5; // sleep a bit anyway
+			
+			try {
+				Thread.sleep(sleepTime);  // sleep a bit    }
+			}
+			catch(InterruptedException ex){
+				ex.printStackTrace();
+			} 
+			beforeTime = System.currentTimeMillis( );
 		}
-		try {
-			Thread.sleep(20);  // sleep a bit    }
-		}
-		catch(InterruptedException ex){
-			ex.printStackTrace();
-		}  
 		System.exit(0);
 	}
 
@@ -143,24 +162,5 @@ public class Tela extends JPanel implements Runnable, MouseMotionListener {
 		catch (Exception e)  {
 			System.out.println("Graphics context error: " + e);  
 		}
-	}
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		Card card = null;
-		for(Card c : Main.cards) {
-			if(c.isHere(e.getX(), e.getY())) {
-//				System.out.println("here");
-				card = c;
-				break;
-			}
-		}
-		if(card != null) {
-			card.changePositionOnMouse(e.getX(), e.getY());
-		}
-	}
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 }
